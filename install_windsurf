@@ -3,7 +3,7 @@ set -eo pipefail # Exit on error, treat unset variables as an error (implicitly)
 
 # --- Configuration ---
 # These can be overridden by environment variables if needed
-: "${GIT_REPO_URL:=https://github.com/xPathin/windsurf-bin-arch.git}"
+: "${GIT_REPO_URL:=https://github.com/BOTOOM/windsurf-bin-arch.git}"
 : "${CLONED_REPO_DIR_NAME:=windsurf-bin-arch}" # Local directory name for the cloned repo
 : "${PKGBUILD_SUBDIR:=package}"                # Subdirectory within the repo containing the PKGBUILD
 : "${WINDSURF_STANDARD_PKG_NAME:=windsurf-bin}"

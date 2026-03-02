@@ -2,12 +2,10 @@
 set -eo pipefail
 
 # --- Configuration ---
-# Default repo URL (can be overridden by env var)
 : "${GIT_REPO_URL:=https://github.com/BOTOOM/windsurf-bin-arch.git}"
 : "${CLONED_REPO_DIR_NAME:=windsurf-bin-arch}"
 : "${PKGBUILD_SUBDIR:=package}"
-: "${WINDSURF_STANDARD_PKG_NAME:=windsurf-bin}"
-: "${WINDSURF_ELECTRON_PKG_NAME:=windsurf-bin-electron-latest}"
+: "${WINDSURF_PKG_NAME:=windsurf-bin}"
 
 # --- Helper Functions ---
 log() {
@@ -49,74 +47,13 @@ get_pkgbuild_version() {
 
 # --- Main Script Logic ---
 main() {
-    log "Starting Windsurf Installer..."
+    log "Starting Windsurf Local Installer..."
     check_command "git"
     check_command "makepkg"
     check_command "pacman"
 
-    # Create temp dir
-    TEMP_DIR=$(mktemp -d --suffix=-windsurf-install)
-    log "Created temporary directory: $TEMP_DIR"
-
-    cleanup() {
-        rm -rf "$TEMP_DIR"
-        log "Cleanup finished."
-    }
-    trap cleanup EXIT
-
-    # Determine Installation Choice
-    TARGET_PKG_NAME=""
-    INSTALL_TYPE_FRIENDLY_NAME=""
-
-    # Check environment variable WINDSURF_INSTALL_CHOICE
-    USER_CHOICE="${WINDSURF_INSTALL_CHOICE:-}"
-
-    if [ -z "$USER_CHOICE" ]; then
-        {
-            echo "--------------------------------------------------------------------"
-            echo " Windsurf Installer"
-            echo "--------------------------------------------------------------------"
-            echo "Please choose which Windsurf package to install:"
-            echo "  1) Windsurf (Standard - ${WINDSURF_STANDARD_PKG_NAME})"
-            echo "  2) Windsurf (Electron - ${WINDSURF_ELECTRON_PKG_NAME})"
-            echo "--------------------------------------------------------------------"
-            printf "Enter your choice (1 or 2, default: 1): " >&2
-            read -r choice_num </dev/tty
-            choice_num=${choice_num:-1}
-
-            case "$choice_num" in
-            1) USER_CHOICE="standard" ;;
-            2) USER_CHOICE="electron" ;;
-            *)
-                error_exit "Invalid choice. Exiting."
-                ;;
-            esac
-        } </dev/tty
-    fi
-
-    case "$USER_CHOICE" in
-    "standard")
-        TARGET_PKG_NAME="$WINDSURF_STANDARD_PKG_NAME"
-        INSTALL_TYPE_FRIENDLY_NAME="Windsurf (Standard)"
-        ;;
-    "electron")
-        TARGET_PKG_NAME="$WINDSURF_ELECTRON_PKG_NAME"
-        INSTALL_TYPE_FRIENDLY_NAME="Windsurf (Electron)"
-        ;;
-    *)
-        error_exit "Invalid value for WINDSURF_INSTALL_CHOICE: '$USER_CHOICE'. Must be 'standard' or 'electron'."
-        ;;
-    esac
-
-    log "Selected: $INSTALL_TYPE_FRIENDLY_NAME ($TARGET_PKG_NAME)"
-
-    # Clone repo
-    log "Cloning repository..."
-    if ! git clone --depth 1 "$GIT_REPO_URL" "$TEMP_DIR/$CLONED_REPO_DIR_NAME"; then
-        error_exit "Failed to clone repository."
-    fi
-
-    BUILD_DIR="$TEMP_DIR/$CLONED_REPO_DIR_NAME/$PKGBUILD_SUBDIR"
+    # Navigate to package directory
+    BUILD_DIR="$PWD/$PKGBUILD_SUBDIR"
     if [ ! -d "$BUILD_DIR" ]; then
         error_exit "Build directory not found: $BUILD_DIR"
     fi
@@ -125,7 +62,7 @@ main() {
 
     # Check Versions
     PKGBUILD_VERSION=$(get_pkgbuild_version "PKGBUILD")
-    INSTALLED_VERSION=$(get_installed_version "$TARGET_PKG_NAME")
+    INSTALLED_VERSION=$(get_installed_version "$WINDSURF_PKG_NAME")
     
     log "Version available in repo: $PKGBUILD_VERSION"
 
@@ -135,7 +72,7 @@ main() {
         log "Currently installed version: $INSTALLED_VERSION"
         
         if [ "$INSTALLED_VERSION" == "$PKGBUILD_VERSION" ]; then
-            printf "%s version %s is already installed and up-to-date. Reinstall anyway? (y/N): " "$TARGET_PKG_NAME" "$PKGBUILD_VERSION" >&2
+            printf "%s version %s is already installed and up-to-date. Reinstall anyway? (y/N): " "$WINDSURF_PKG_NAME" "$PKGBUILD_VERSION" >&2
             read -r reinstall_choice </dev/tty
             if [[ "$reinstall_choice" =~ ^[Yy]$ ]]; then
                 PROCEED_WITH_BUILD=true
@@ -153,8 +90,8 @@ main() {
             fi
         fi
     else
-        log "$TARGET_PKG_NAME is not currently installed."
-        printf "Install %s version %s? (Y/n): " "$TARGET_PKG_NAME" "$PKGBUILD_VERSION" >&2
+        log "$WINDSURF_PKG_NAME is not currently installed."
+        printf "Install %s version %s? (Y/n): " "$WINDSURF_PKG_NAME" "$PKGBUILD_VERSION" >&2
         read -r install_new_choice </dev/tty
         if [[ ! "$install_new_choice" =~ ^[Nn]$ ]]; then # Default to Yes
             PROCEED_WITH_BUILD=true
@@ -169,7 +106,7 @@ main() {
     
     log "Building and installing package..."
     # Using --noconfirm for automated build phases, but pacman might still ask for sudo password via tty
-    if ! makepkg -si --noconfirm --needed "${TARGET_PKG_NAME}" </dev/tty; then
+    if ! makepkg -si --noconfirm --needed </dev/tty; then
         error_exit "Installation failed."
     fi
 

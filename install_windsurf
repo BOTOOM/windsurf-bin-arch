@@ -167,9 +167,22 @@ main() {
         exit 0
     fi
     
-    log "Building and installing package..."
-    # Using --noconfirm for automated build phases, but pacman might still ask for sudo password via tty
-    if ! makepkg -si --noconfirm --needed "${TARGET_PKG_NAME}" </dev/tty; then
+    log "Building package..."
+    # Use --pkg to build only the selected split package (not all packages in the PKGBUILD).
+    # -s installs any missing build/runtime dependencies automatically.
+    if ! makepkg --pkg "$TARGET_PKG_NAME" -s --noconfirm </dev/tty; then
+        error_exit "Build failed."
+    fi
+
+    # Ask makepkg for the exact filename it produced to avoid glob ambiguity
+    PKG_FILE=$(makepkg --pkg "$TARGET_PKG_NAME" --packagelist 2>/dev/null | grep -F "/${TARGET_PKG_NAME}-" | head -1)
+    if [ -z "$PKG_FILE" ] || [ ! -f "$PKG_FILE" ]; then
+        error_exit "Built package file not found for ${TARGET_PKG_NAME}."
+    fi
+
+    log "Installing package: $PKG_FILE"
+    # Install interactively (no --noconfirm) so the user can respond to any conflict prompts
+    if ! sudo pacman -U "$PKG_FILE" </dev/tty; then
         error_exit "Installation failed."
     fi
 

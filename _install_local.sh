@@ -104,9 +104,21 @@ main() {
         exit 0
     fi
     
-    log "Building and installing package..."
-    # Using --noconfirm for automated build phases, but pacman might still ask for sudo password via tty
-    if ! makepkg -si --noconfirm --needed </dev/tty; then
+    log "Building package..."
+    # Build all split packages (makepkg always builds all splits together)
+    if ! makepkg -sf --noconfirm; then
+        error_exit "Build failed."
+    fi
+
+    # Find the built package file for the target only
+    PKG_FILE=$(find . -maxdepth 1 -name "${WINDSURF_PKG_NAME}-${PKGBUILD_VERSION}-*.pkg.tar.*" -print -quit)
+    if [ -z "$PKG_FILE" ]; then
+        error_exit "Could not find built package file for ${WINDSURF_PKG_NAME}."
+    fi
+
+    log "Installing ${WINDSURF_PKG_NAME} from ${PKG_FILE}..."
+    # Install only the target package, allowing interactive conflict resolution via TTY
+    if ! sudo pacman -U "$PKG_FILE" </dev/tty; then
         error_exit "Installation failed."
     fi
 

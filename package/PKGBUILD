@@ -2,7 +2,7 @@
 
 pkgbase=windsurf-bin
 pkgname=(windsurf-bin{,-electron-latest})
-pkgver=2.0.50
+pkgver=2.0.61
 pkgrel=1
 arch=('x86_64')
 url="https://windsurf.com/"
@@ -23,9 +23,9 @@ optdepends=('glib2: Move to trash functionality'
             'vulkan-driver')
 options=('!strip')
 makedepends=(tar sed desktop-file-utils)
-source=("https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/pool/main/w/windsurf/Windsurf-linux-x64-2.0.50.deb"
+source=("https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/pool/main/w/windsurf/Windsurf-linux-x64-2.0.61.deb"
 		"https://gitlab.archlinux.org/archlinux/packaging/packages/code/-/raw/main/code.sh")
-sha256sums=('d59cf97c78cc22e7988e178264429510b84b0ac154403101e75eafc89c9c57de'
+sha256sums=('94a52c17801084941edbccd89a7fd82af3875cd491e0a27dd06ba6a7e229556d'
             '5da1525b5fe804b9192c05e1cbf8d751d852e3717fb2787c7ffe98fd5d93e8c1')
 build() {
 	tar -xf "data.tar.xz" --exclude 'usr/share/windsurf/[^r]*' --exclude 'usr/share/windsurf/*.pak'

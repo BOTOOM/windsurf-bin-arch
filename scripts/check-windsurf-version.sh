@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-CHANGELOG_URL="${DEVIN_CHANGELOG_URL:-https://docs.devin.ai/desktop/changelog}"
+CHANGELOG_URL="${DEVIN_CHANGELOG_URL:-https://docs.devin.ai/desktop/releases}"
 
 TEMP_DIR=$(mktemp -d)
 cleanup() {
@@ -13,9 +13,9 @@ CHANGELOG_FILE="$TEMP_DIR/changelog.html"
 curl -fsSL "$CHANGELOG_URL" -o "$CHANGELOG_FILE"
 
 mapfile -t CANDIDATES < <(
-    grep -oE 'https://[^"< ]+/Devin-linux-x64-[0-9]+\.[0-9]+\.[0-9]+\.deb' "$CHANGELOG_FILE" \
+    grep -oE 'https://windsurf-stable\.codeiumdata\.com/linux-x64-deb/stable/[a-f0-9]+/Devin-linux-x64-[0-9]+\.[0-9]+\.[0-9]+\.deb' "$CHANGELOG_FILE" \
         | sed 's/&amp;/\&/g' \
-        | awk -F'Devin-linux-x64-|\\.deb' '{ print $2 " " $0 }' \
+        | awk -F'Devin-linux-x64-|[.]deb' '{ print $2 " " $0 }' \
         | sort -Vru
 )
 
